@@ -1,19 +1,16 @@
 mod falselang;
-use falselang::vm::{FalseVM, StepResult};
+use falselang::vm::FalseVM;
+use std::time::Instant;
 
 
 fn main() {
 	let mut vm = FalseVM::new();
-	println!("Parsing...");
+	print!("Parsing... ");
+	let start = Instant::now();
 	vm.load("   2 2 +  ");
+	println!("ok, {:?}", start.elapsed());
 
-	loop {
-		println!("Next instr: {:?}", vm.peek_instruction());
-		let r = vm.step();
-		println!("Stack: {:?}", vm.stack);
-		if r == StepResult::End {
-			break;
-		}
-	}
+	println!("Running...");
+	vm.runv(true);
 	println!("Run complete.");
 }

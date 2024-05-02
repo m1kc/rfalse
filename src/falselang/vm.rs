@@ -106,6 +106,58 @@ impl FalseVM {
 				let a = self.stack.pop().expect("Stack underflow");
 				self.stack.push(!a);
 			}
+
+			Token::GreaterThan => {
+				todo!("GreaterThan not implemented")
+			}
+			Token::Equal => {
+				todo!("Equal not implemented")
+			}
+			Token::LessThan => {
+				todo!("LessThan not implemented")
+			}
+
+			Token::LambdaStart => {
+				todo!("LambdaStart not implemented")
+			}
+			Token::LambdaEnd => {
+				todo!("LambdaEnd not implemented")
+			}
+			Token::LambdaExecute => {
+				todo!("LambdaExecute not implemented")
+			}
+			Token::LambdaIf => {
+				todo!("LambdaIf not implemented")
+			}
+			Token::LambdaWhile => {
+				todo!("LambdaWhile not implemented")
+			}
+
+			Token::Variable(_) => {
+				todo!("Variable not implemented")
+			}
+			Token::VarWrite => {
+				todo!("VarWrite not implemented")
+			}
+			Token::VarRead => {
+				todo!("VarRead not implemented")
+			}
+
+			Token::ReadChar => {
+				todo!("ReadChar not implemented")
+			}
+			Token::WriteChar => {
+				todo!("WriteChar not implemented")
+			}
+			Token::PrintString(_) => {
+				todo!("PrintString not implemented")
+			}
+			Token::WriteInt => {
+				todo!("WriteInt not implemented")
+			}
+			Token::FlushIO => {
+				todo!("FlushIO not implemented")
+			}
 		}
 		self.head += 1;
 		return StepResult::OK;
@@ -113,10 +165,20 @@ impl FalseVM {
 
 	#[allow(dead_code)]
 	pub fn run(&mut self) {
+		return self.runv(false);
+	}
+
+	pub fn runv(&mut self, verbose: bool) {
 		loop {
+			if verbose {
+				println!("Next instr: {:?}", self.peek_instruction());
+			}
 			let r = self.step();
 			if r == StepResult::End {
 				break;
+			}
+			if verbose {
+				println!("Stack: {:?}", self.stack);
 			}
 		}
 	}
