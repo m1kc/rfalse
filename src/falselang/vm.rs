@@ -1,5 +1,8 @@
 use super::tokenizer::{Token, Tokenizer};
 
+use std::{collections::HashMap, hash::Hash};
+
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StepResult {
 	OK,
@@ -10,6 +13,7 @@ pub enum StepResult {
 pub enum StackElement {
 	Number(i64),
 	Lambda(Vec<Token>),
+	Variable(char),
 }
 
 impl StackElement {
@@ -26,10 +30,18 @@ impl StackElement {
 		}
 		panic!("Expected lambda, got {:?}", self);
 	}
+
+	pub fn expect_variable(&self) -> char {
+		if let StackElement::Variable(v) = self {
+			return *v;
+		}
+		panic!("Expected variable, got {:?}", self);
+	}
 }
 
 pub struct FalseVM {
 	pub stack: Vec<StackElement>,
+	pub variables: HashMap<char, StackElement>,
 
 	pub instructions: Vec<Token>,
 	pub head: usize,
@@ -39,6 +51,7 @@ impl FalseVM {
 	pub fn new() -> FalseVM {
 		FalseVM {
 			stack: Vec::new(),
+			variables: HashMap::new(),
 			instructions: Vec::new(),
 			head: 0,
 		}
@@ -97,22 +110,22 @@ impl FalseVM {
 			Token::Plus => {
 				let a: i64 = self.stack.pop().expect("Stack underflow").expect_number();
 				let b: i64 = self.stack.pop().expect("Stack underflow").expect_number();
-				self.stack.push(StackElement::Number(a + b));
+				self.stack.push(StackElement::Number(b + a));
 			}
 			Token::Minus => {
 				let a = self.stack.pop().expect("Stack underflow").expect_number();
 				let b = self.stack.pop().expect("Stack underflow").expect_number();
-				self.stack.push(StackElement::Number(a - b));
+				self.stack.push(StackElement::Number(b - a));
 			}
 			Token::Mul => {
 				let a = self.stack.pop().expect("Stack underflow").expect_number();
 				let b = self.stack.pop().expect("Stack underflow").expect_number();
-				self.stack.push(StackElement::Number(a * b));
+				self.stack.push(StackElement::Number(b * a));
 			}
 			Token::Div => {
 				let a = self.stack.pop().expect("Stack underflow").expect_number();
 				let b = self.stack.pop().expect("Stack underflow").expect_number();
-				self.stack.push(StackElement::Number(a / b));
+				self.stack.push(StackElement::Number(b / a));
 			}
 			Token::Negate => {
 				let a = self.stack.pop().expect("Stack underflow").expect_number();
@@ -134,13 +147,19 @@ impl FalseVM {
 			}
 
 			Token::GreaterThan => {
-				todo!("GreaterThan not implemented")
+				let a = self.stack.pop().expect("Stack underflow").expect_number();
+				let b = self.stack.pop().expect("Stack underflow").expect_number();
+				self.stack.push(StackElement::Number(if a > b { !0 } else { 0 }));
 			}
 			Token::Equal => {
-				todo!("Equal not implemented")
+				let a = self.stack.pop().expect("Stack underflow").expect_number();
+				let b = self.stack.pop().expect("Stack underflow").expect_number();
+				self.stack.push(StackElement::Number(if a == b { !0 } else { 0 }));
 			}
 			Token::LessThan => {
-				todo!("LessThan not implemented")
+				let a = self.stack.pop().expect("Stack underflow").expect_number();
+				let b = self.stack.pop().expect("Stack underflow").expect_number();
+				self.stack.push(StackElement::Number(if a < b { !0 } else { 0 }));
 			}
 
 			Token::ParsedLambda(v) => {
@@ -148,21 +167,35 @@ impl FalseVM {
 			}
 			Token::LambdaExecute => {
 				let l = self.stack.pop().expect("Stack underflow");
-				let l2 = l.expect_lambda();
+				let l = l.expect_lambda();
 
 				// save
 				let tmph = self.head;
 				let tmp = self.instructions.clone();
 				// replace & run
-				self.instructions = l2.clone();
+				self.instructions = l.clone();
 				self.head = 0;
-				self.runv(false);
+				self.runv(true);
 				// restore
 				self.instructions = tmp;
 				self.head = tmph;
 			}
 			Token::LambdaIf => {
-				todo!("LambdaIf not implemented")
+				let l = self.stack.pop().expect("Stack underflow");
+				let l = l.expect_lambda();
+				let cond = self.stack.pop().expect("Stack underflow").expect_number();
+				if cond != 0 {
+					// save
+					let tmph = self.head;
+					let tmp = self.instructions.clone();
+					// replace & run
+					self.instructions = l.clone();
+					self.head = 0;
+					self.runv(true);
+					// restore
+					self.instructions = tmp;
+					self.head = tmph;
+				}
 			}
 			Token::LambdaWhile => {
 				todo!("LambdaWhile not implemented")
@@ -174,14 +207,18 @@ impl FalseVM {
 				panic!("LambdaEnd must not be output by parser")
 			}
 
-			Token::Variable(_) => {
-				todo!("Variable not implemented")
+			Token::Variable(x) => {
+				self.stack.push(StackElement::Variable(*x))
 			}
 			Token::VarWrite => {
-				todo!("VarWrite not implemented")
+				let var = self.stack.pop().expect("Stack underflow").expect_variable();
+				let val = self.stack.pop().expect("Stack underflow");
+				self.variables.insert(var, val);
 			}
 			Token::VarRead => {
-				todo!("VarRead not implemented")
+				let var = self.stack.pop().expect("Stack underflow").expect_variable();
+				let val = self.variables.get(&var).expect("Variable not found").clone();
+				self.stack.push(val);
 			}
 
 			Token::ReadChar => {
@@ -190,8 +227,8 @@ impl FalseVM {
 			Token::WriteChar => {
 				todo!("WriteChar not implemented")
 			}
-			Token::PrintString(_) => {
-				todo!("PrintString not implemented")
+			Token::PrintString(s) => {
+				println!("{}", s);
 			}
 			Token::WriteInt => {
 				todo!("WriteInt not implemented")
@@ -212,14 +249,17 @@ impl FalseVM {
 	pub fn runv(&mut self, verbose: bool) {
 		loop {
 			if verbose {
-				println!("Next instr: {:?}", self.peek_instruction());
+				println!("\n-----\nDoing instr: {:?}", self.peek_instruction());
 			}
 			let r = self.step();
+			// wait for keystroke
+			// std::io::stdin().read_line(&mut String::new()).unwrap();
 			if r == StepResult::End {
 				break;
 			}
 			if verbose {
-				println!("Stack: {:?}", self.stack);
+				println!("-----\nStack: {:?}", self.stack);
+				println!("Vars: {:?}", self.variables);
 			}
 		}
 	}
