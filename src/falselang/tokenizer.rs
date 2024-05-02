@@ -90,6 +90,9 @@ pub enum Token {
 	PrintString(String),
 	WriteInt,
 	FlushIO,
+
+	// Parser stuff
+	ParsedLambda(Vec<Token>),
 }
 
 const SIMPLE_TOKENS: [(char, Token); 55] = [
@@ -216,6 +219,7 @@ impl Tokenizer {
 		}
 	}
 
+	#[allow(dead_code)]
 	pub fn all(&mut self) -> Vec<Token> {
 		let mut tokens = Vec::new();
 		while let Some(token) = self.next_token() {
@@ -380,12 +384,12 @@ mod tests {
 
 	#[test]
 	fn test_10() {
-		let mut parser = Tokenizer::new("\"hello\"        \"world\"");
+		let mut parser = Tokenizer::new("\"hello\"        \"wo\nr\nld\"");
 		let tokens = parser.all();
 
 		assert_eq!(tokens, vec![
 			Token::PrintString("hello".to_string()),
-			Token::PrintString("world".to_string()),
+			Token::PrintString("wo\nr\nld".to_string()),
 		]);
 	}
 

@@ -23,8 +23,9 @@ impl FalseVM {
 	}
 
 	pub fn load(&mut self, code: &str) {
-		let mut p = Tokenizer::new(code);
-		self.instructions = p.all();
+		let t = Tokenizer::new(code);
+		let mut parser = super::parser::Parser::new(t);
+		self.instructions = parser.all();
 		self.head = 0;
 	}
 
@@ -116,12 +117,6 @@ impl FalseVM {
 				todo!("LessThan not implemented")
 			}
 
-			Token::LambdaStart => {
-				todo!("LambdaStart not implemented")
-			}
-			Token::LambdaEnd => {
-				todo!("LambdaEnd not implemented")
-			}
 			Token::LambdaExecute => {
 				todo!("LambdaExecute not implemented")
 			}
@@ -130,6 +125,15 @@ impl FalseVM {
 			}
 			Token::LambdaWhile => {
 				todo!("LambdaWhile not implemented")
+			}
+			Token::ParsedLambda(_) => {
+				todo!("ParsedLambda not implemented")
+			}
+			Token::LambdaStart => {
+				panic!("LambdaStart must not be output by parser")
+			}
+			Token::LambdaEnd => {
+				panic!("LambdaEnd must not be output by parser")
 			}
 
 			Token::Variable(_) => {
