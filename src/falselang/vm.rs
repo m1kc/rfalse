@@ -1,6 +1,6 @@
 use super::tokenizer::{Token, Tokenizer};
 
-use std::{collections::HashMap, io::Write};
+use std::{collections::HashMap, io::{self, Read, Write}};
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -69,6 +69,19 @@ impl FalseVM {
 
 	pub fn peek_instruction(&self) -> Option<&Token> {
 		self.instructions.get(self.head)
+	}
+
+	pub fn gosub(&mut self, code: &Vec<Token>) {
+		// save
+		let tmph = self.head;
+		let tmp = self.instructions.clone();
+		// replace & run
+		self.instructions = code.clone();
+		self.head = 0;
+		self.run();
+		// restore
+		self.instructions = tmp;
+		self.head = tmph;
 	}
 
 	pub fn step(&mut self) -> StepResult {
@@ -152,7 +165,7 @@ impl FalseVM {
 			Token::GreaterThan => {
 				let a = self.stack.pop().expect("Stack underflow").expect_number();
 				let b = self.stack.pop().expect("Stack underflow").expect_number();
-				self.stack.push(StackElement::Number(if a > b { !0 } else { 0 }));
+				self.stack.push(StackElement::Number(if a < b { !0 } else { 0 }));
 			}
 			Token::Equal => {
 				let a = self.stack.pop().expect("Stack underflow").expect_number();
@@ -162,7 +175,7 @@ impl FalseVM {
 			Token::LessThan => {
 				let a = self.stack.pop().expect("Stack underflow").expect_number();
 				let b = self.stack.pop().expect("Stack underflow").expect_number();
-				self.stack.push(StackElement::Number(if a < b { !0 } else { 0 }));
+				self.stack.push(StackElement::Number(if a > b { !0 } else { 0 }));
 			}
 
 			Token::ParsedLambda(v) => {
@@ -171,37 +184,30 @@ impl FalseVM {
 			Token::LambdaExecute => {
 				let l = self.stack.pop().expect("Stack underflow");
 				let l = l.expect_lambda();
-
-				// save
-				let tmph = self.head;
-				let tmp = self.instructions.clone();
-				// replace & run
-				self.instructions = l.clone();
-				self.head = 0;
-				self.run();
-				// restore
-				self.instructions = tmp;
-				self.head = tmph;
+				self.gosub(l);
 			}
 			Token::LambdaIf => {
 				let l = self.stack.pop().expect("Stack underflow");
 				let l = l.expect_lambda();
 				let cond = self.stack.pop().expect("Stack underflow").expect_number();
 				if cond != 0 {
-					// save
-					let tmph = self.head;
-					let tmp = self.instructions.clone();
-					// replace & run
-					self.instructions = l.clone();
-					self.head = 0;
-					self.run();
-					// restore
-					self.instructions = tmp;
-					self.head = tmph;
+					self.gosub(l);
 				}
 			}
 			Token::LambdaWhile => {
-				todo!("LambdaWhile not implemented")
+				let body = self.stack.pop().expect("Stack underflow");
+				let body = body.expect_lambda();
+				let cond = self.stack.pop().expect("Stack underflow");
+				let cond = cond.expect_lambda();
+
+				loop {
+					self.gosub(cond);
+					let cond = self.stack.pop().expect("Stack underflow").expect_number();
+					if cond == 0 {
+						break;
+					}
+					self.gosub(body);
+				}
 			}
 			Token::LambdaStart => {
 				panic!("LambdaStart must not be output by parser")
@@ -225,7 +231,11 @@ impl FalseVM {
 			}
 
 			Token::ReadChar => {
-				todo!("ReadChar not implemented")
+				// read char from stdin
+				let mut buf = [0u8; 1];
+				io::stdin().read_exact(&mut buf).unwrap();
+				let c = buf[0] as i64;
+				self.stack.push(StackElement::Number(c));
 			}
 			Token::WriteChar => {
 				let c = self.stack.pop().expect("Stack underflow").expect_number();
