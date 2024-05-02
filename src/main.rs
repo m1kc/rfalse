@@ -10,10 +10,12 @@ fn main() {
 	// vm.load("   2 2 +  ");
 	// vm.load("[2 2+]![2 2+]!");
 	// vm.load("1[\"hello\"]? 0[\"hello\"]?");
-	vm.load("[$1=$[\\%1\\]?~[$1-f;!*]?]f:    5 f;!");
+	vm.load("[$1=$[\\%1\\]?~[$1-f;!*]?]f:    6 f;!");  // factorial example
+	// vm.load("123.");
 	println!("ok, {:?}", start.elapsed());
 
 	println!("Running...");
-	vm.runv(true);
+	vm.verbose = true;
+	vm.run();
 	println!("Run complete.");
 }

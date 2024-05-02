@@ -1,6 +1,6 @@
 use super::tokenizer::{Token, Tokenizer};
 
-use std::{collections::HashMap, hash::Hash};
+use std::{collections::HashMap, io::Write};
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -45,6 +45,8 @@ pub struct FalseVM {
 
 	pub instructions: Vec<Token>,
 	pub head: usize,
+
+	pub verbose: bool,
 }
 
 impl FalseVM {
@@ -54,6 +56,7 @@ impl FalseVM {
 			variables: HashMap::new(),
 			instructions: Vec::new(),
 			head: 0,
+			verbose: false,
 		}
 	}
 
@@ -175,7 +178,7 @@ impl FalseVM {
 				// replace & run
 				self.instructions = l.clone();
 				self.head = 0;
-				self.runv(true);
+				self.run();
 				// restore
 				self.instructions = tmp;
 				self.head = tmph;
@@ -191,7 +194,7 @@ impl FalseVM {
 					// replace & run
 					self.instructions = l.clone();
 					self.head = 0;
-					self.runv(true);
+					self.run();
 					// restore
 					self.instructions = tmp;
 					self.head = tmph;
@@ -225,16 +228,19 @@ impl FalseVM {
 				todo!("ReadChar not implemented")
 			}
 			Token::WriteChar => {
-				todo!("WriteChar not implemented")
+				let c = self.stack.pop().expect("Stack underflow").expect_number();
+				let c = std::char::from_u32(c as u32).expect("Invalid char");
+				print!("{}", c);
 			}
 			Token::PrintString(s) => {
-				println!("{}", s);
+				print!("{}", s);
 			}
 			Token::WriteInt => {
-				todo!("WriteInt not implemented")
+				let n = self.stack.pop().expect("Stack underflow").expect_number();
+				print!("{}", n);
 			}
 			Token::FlushIO => {
-				todo!("FlushIO not implemented")
+				std::io::stdout().flush().unwrap();
 			}
 		}
 		self.head += 1;
@@ -243,13 +249,9 @@ impl FalseVM {
 
 	#[allow(dead_code)]
 	pub fn run(&mut self) {
-		return self.runv(false);
-	}
-
-	pub fn runv(&mut self, verbose: bool) {
 		loop {
-			if verbose {
-				println!("\n-----\nDoing instr: {:?}", self.peek_instruction());
+			if self.verbose {
+				println!("\n==> Doing instr: {:?}", self.peek_instruction());
 			}
 			let r = self.step();
 			// wait for keystroke
@@ -257,9 +259,9 @@ impl FalseVM {
 			if r == StepResult::End {
 				break;
 			}
-			if verbose {
-				println!("-----\nStack: {:?}", self.stack);
-				println!("Vars: {:?}", self.variables);
+			if self.verbose {
+				println!("\n==> Stack: {:?}", self.stack);
+				println!("    Vars: {:?}", self.variables);
 			}
 		}
 	}
@@ -422,6 +424,16 @@ mod tests {
 		vm.run();
 		assert_eq!(vm.stack, vec![
 			StackElement::Number(-6),
+		]);
+	}
+
+	#[test]
+	fn test_fn_factorial() {
+		let mut vm = FalseVM::new();
+		vm.load("[$1=$[\\%1\\]?~[$1-f;!*]?]f:    6 f;!");
+		vm.run();
+		assert_eq!(vm.stack, vec![
+			StackElement::Number(720),
 		]);
 	}
 }
