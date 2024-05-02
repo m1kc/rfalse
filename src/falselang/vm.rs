@@ -59,8 +59,8 @@ impl FalseVM {
 		if self.head >= self.instructions.len() {
 			return StepResult::End;
 		}
-		match self.instructions[self.head] {
-			Token::Number(n) => self.stack.push(StackElement::Number(n)),
+		match &self.instructions[self.head] {
+			Token::Number(n) => self.stack.push(StackElement::Number(*n)),
 
 			Token::Dup => {
 				let a = self.stack.last().expect("Stack underflow").clone();
@@ -143,17 +143,29 @@ impl FalseVM {
 				todo!("LessThan not implemented")
 			}
 
+			Token::ParsedLambda(v) => {
+				self.stack.push(StackElement::Lambda(v.clone()));
+			}
 			Token::LambdaExecute => {
-				todo!("LambdaExecute not implemented")
+				let l = self.stack.pop().expect("Stack underflow");
+				let l2 = l.expect_lambda();
+
+				// save
+				let tmph = self.head;
+				let tmp = self.instructions.clone();
+				// replace & run
+				self.instructions = l2.clone();
+				self.head = 0;
+				self.runv(false);
+				// restore
+				self.instructions = tmp;
+				self.head = tmph;
 			}
 			Token::LambdaIf => {
 				todo!("LambdaIf not implemented")
 			}
 			Token::LambdaWhile => {
 				todo!("LambdaWhile not implemented")
-			}
-			Token::ParsedLambda(_) => {
-				todo!("ParsedLambda not implemented")
 			}
 			Token::LambdaStart => {
 				panic!("LambdaStart must not be output by parser")
