@@ -1,5 +1,3 @@
-use super::Token;
-
 /// Supported tokens:
 ///
 /// ### Literals
@@ -52,6 +50,46 @@ use super::Token;
 /// - `{...}` comment
 pub struct Tokenizer {
 	code: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Token {
+	Number(i64),
+
+	Dup,
+	Drop,
+	Swap,
+	Rot,
+	Pick,
+
+	Plus,
+	Minus,
+	Mul,
+	Div,
+	Negate,
+	BitAnd,
+	BitOr,
+	BitNot,
+
+	GreaterThan,
+	Equal,
+	LessThan,
+
+	LambdaStart,
+	LambdaEnd,
+	LambdaExecute,
+	LambdaIf,
+	LambdaWhile,
+
+	Variable(char),
+	VarWrite,
+	VarRead,
+
+	ReadChar,
+	WriteChar,
+	PrintString(String),
+	WriteInt,
+	FlushIO,
 }
 
 const SIMPLE_TOKENS: [(char, Token); 55] = [
@@ -360,6 +398,41 @@ mod tests {
 			Token::Number(1),
 			Token::Number(2),
 			Token::Number(3),
+		]);
+	}
+
+	#[test]
+	fn test_12() {
+		let mut parser = Tokenizer::new("[$1=$[\\%1\\]?~[$1-f;!*]?]f:");
+		let tokens = parser.all();
+
+		assert_eq!(tokens, vec![
+			Token::LambdaStart,
+			Token::Dup,
+			Token::Number(1),
+			Token::Equal,
+			Token::Dup,
+			Token::LambdaStart,
+			Token::Swap,
+			Token::Drop,
+			Token::Number(1),
+			Token::Swap,
+			Token::LambdaEnd,
+			Token::LambdaIf,
+			Token::BitNot,
+			Token::LambdaStart,
+			Token::Dup,
+			Token::Number(1),
+			Token::Minus,
+			Token::Variable('f'),
+			Token::VarRead,
+			Token::LambdaExecute,
+			Token::Mul,
+			Token::LambdaEnd,
+			Token::LambdaIf,
+			Token::LambdaEnd,
+			Token::Variable('f'),
+			Token::VarWrite,
 		]);
 	}
 }

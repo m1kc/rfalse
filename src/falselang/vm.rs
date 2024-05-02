@@ -1,5 +1,4 @@
-use super::Token;
-use super::tokenizer::Tokenizer;
+use super::tokenizer::{Token, Tokenizer};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StepResult {
