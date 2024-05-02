@@ -1,4 +1,4 @@
-pub mod parser;
+pub mod tokenizer;
 pub mod vm;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

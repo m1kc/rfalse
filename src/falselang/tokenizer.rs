@@ -1,5 +1,23 @@
 use super::Token;
 
+const SIMPLE_TOKENS: [(char, Token); 14] = [
+	('$', Token::Dup),
+	('%', Token::Drop),
+	('\\', Token::Swap),
+	('@', Token::Rot),
+	('ø', Token::Pick),
+	('P', Token::Pick),
+
+	('+', Token::Plus),
+	('-', Token::Minus),
+	('*', Token::Mul),
+	('/', Token::Div),
+	('_', Token::Negate),
+	('&', Token::BitAnd),
+	('|', Token::BitOr),
+	('~', Token::BitNot),
+];
+
 /// Supported tokens:
 ///
 /// Literals
@@ -11,7 +29,7 @@ use super::Token;
 /// - `%` DROP
 /// - `\` SWAP
 /// - `@` ROT
-/// - `ø` or `p` PICK (dup the nth stack item). `p` is an extension
+/// - `ø` or `P` PICK (dup the nth stack item). **Note**: `P` is rfalse extension
 ///
 /// Arithmetic
 /// - `+`
@@ -22,13 +40,13 @@ use super::Token;
 /// - `&` bitwise AND
 /// - `|` bitwise OR
 /// - `~` bitwise NOT
-pub struct Parser {
+pub struct Tokenizer {
 	code: String,
 }
 
-impl Parser {
-	pub fn new(code: &str) -> Parser {
-		Parser {
+impl Tokenizer {
+	pub fn new(code: &str) -> Tokenizer {
+		Tokenizer {
 			code: code.to_string(),
 		}
 	}
@@ -53,61 +71,14 @@ impl Parser {
 			Some(x) => x,
 		};
 
-		match c {
-			'$' => {
-				self.code = self.code[1..].to_string();
-				return Some(Token::Dup)
-			}
-			'%' => {
-				self.code = self.code[1..].to_string();
-				return Some(Token::Drop)
-			}
-			'\\' => {
-				self.code = self.code[1..].to_string();
-				return Some(Token::Swap)
-			}
-			'@' => {
-				self.code = self.code[1..].to_string();
-				return Some(Token::Rot)
-			}
-			'ø' | 'p' => {
+		for &(token_char, token) in SIMPLE_TOKENS.iter() {
+			if c == token_char {
 				self.code = self.code.chars().skip(1).collect();
-				return Some(Token::Pick)
+				return Some(token)
 			}
+		}
 
-			'+' => {
-				self.code = self.code[1..].to_string();
-				return Some(Token::Plus)
-			}
-			'-' => {
-				self.code = self.code[1..].to_string();
-				return Some(Token::Minus)
-			}
-			'*' => {
-				self.code = self.code[1..].to_string();
-				return Some(Token::Mul)
-			}
-			'/' => {
-				self.code = self.code[1..].to_string();
-				return Some(Token::Div)
-			}
-			'_' => {
-				self.code = self.code[1..].to_string();
-				return Some(Token::Negate)
-			}
-			'&' => {
-				self.code = self.code[1..].to_string();
-				return Some(Token::BitAnd)
-			}
-			'|' => {
-				self.code = self.code[1..].to_string();
-				return Some(Token::BitOr)
-			}
-			'~' => {
-				self.code = self.code[1..].to_string();
-				return Some(Token::BitNot)
-			}
-
+		match c {
 			'\'' => {
 				let charcode = self.code.chars().nth(1).expect("parser error");
 				self.code = self.code[2..].to_string();
@@ -122,7 +93,7 @@ impl Parser {
 		}
 	}
 
-	pub fn parse_all(&mut self) -> Vec<Token> {
+	pub fn all(&mut self) -> Vec<Token> {
 		let mut tokens = Vec::new();
 		while let Some(token) = self.next_token() {
 			tokens.push(token);
@@ -138,7 +109,7 @@ mod tests {
 
 	#[test]
 	fn test_next_token() {
-		let mut parser = Parser::new("1+2-3* 4    / 5     ");
+		let mut parser = Tokenizer::new("1+2-3* 4    / 5     ");
 
 		assert_eq!(parser.next_token(), Some(Token::Number(1)));
 		assert_eq!(parser.next_token(), Some(Token::Plus));
@@ -153,9 +124,9 @@ mod tests {
 	}
 
 	#[test]
-	fn test_parse_all() {
-		let mut parser = Parser::new("1+2-3* 4    / 5     ");
-		let tokens = parser.parse_all();
+	fn test_all() {
+		let mut parser = Tokenizer::new("1+2-3* 4    / 5     ");
+		let tokens = parser.all();
 
 		assert_eq!(tokens, vec![
 			Token::Number(1),

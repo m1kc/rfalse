@@ -1,5 +1,5 @@
 use super::Token;
-use super::parser::Parser;
+use super::tokenizer::Tokenizer;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StepResult {
@@ -24,8 +24,8 @@ impl FalseVM {
 	}
 
 	pub fn load(&mut self, code: &str) {
-		let mut p = Parser::new(code);
-		self.instructions = p.parse_all();
+		let mut p = Tokenizer::new(code);
+		self.instructions = p.all();
 		self.head = 0;
 	}
 
@@ -201,7 +201,7 @@ mod tests {
 	#[test]
 	fn test_pick_2() {
 		let mut vm = FalseVM::new();
-		vm.load("7 8 9 2p");
+		vm.load("7 8 9 2P");
 		vm.run();
 		assert_eq!(vm.stack, vec![7, 8, 9, 7]);
 	}
