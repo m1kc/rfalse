@@ -44,7 +44,7 @@ pub struct FalseVM {
 	pub variables: HashMap<char, StackElement>,
 
 	pub instructions: Vec<Token>,
-	pub head: usize,
+	pub cursor: usize,
 
 	pub verbose: bool,
 }
@@ -55,7 +55,7 @@ impl FalseVM {
 			stack: Vec::new(),
 			variables: HashMap::new(),
 			instructions: Vec::new(),
-			head: 0,
+			cursor: 0,
 			verbose: false,
 		}
 	}
@@ -64,31 +64,31 @@ impl FalseVM {
 		let t = Tokenizer::new(code);
 		let mut parser = super::parser::Parser::new(t);
 		self.instructions = parser.all();
-		self.head = 0;
+		self.cursor = 0;
 	}
 
 	pub fn peek_instruction(&self) -> Option<&Token> {
-		self.instructions.get(self.head)
+		self.instructions.get(self.cursor)
 	}
 
-	pub fn gosub(&mut self, code: &Vec<Token>) {
+	pub fn gosub(&mut self, code: &[Token]) {
 		// save
-		let tmph = self.head;
+		let tmph = self.cursor;
 		let tmp = self.instructions.clone();
 		// replace & run
-		self.instructions = code.clone();
-		self.head = 0;
+		self.instructions = code.to_owned();
+		self.cursor = 0;
 		self.run();
 		// restore
 		self.instructions = tmp;
-		self.head = tmph;
+		self.cursor = tmph;
 	}
 
 	pub fn step(&mut self) -> StepResult {
-		if self.head >= self.instructions.len() {
+		if self.cursor >= self.instructions.len() {
 			return StepResult::End;
 		}
-		match &self.instructions[self.head] {
+		match &self.instructions[self.cursor] {
 			Token::Number(n) => self.stack.push(StackElement::Number(*n)),
 
 			Token::Dup => {
@@ -226,7 +226,7 @@ impl FalseVM {
 			}
 			Token::VarRead => {
 				let var = self.stack.pop().expect("Stack underflow").expect_variable();
-				let val = self.variables.get(&var).expect("Variable not found").clone();
+				let val = self.variables.get(&var).expect("Variable not initialized").clone();
 				self.stack.push(val);
 			}
 
@@ -253,7 +253,7 @@ impl FalseVM {
 				std::io::stdout().flush().unwrap();
 			}
 		}
-		self.head += 1;
+		self.cursor += 1;
 		return StepResult::OK;
 	}
 
