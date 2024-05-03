@@ -1,5 +1,4 @@
-#[cfg(target_arch = "wasm32")]
-mod falselang;
+pub mod falselang;
 #[cfg(target_arch = "wasm32")]
 use falselang::vm::FalseVM;
 // use std::time::Instant;
