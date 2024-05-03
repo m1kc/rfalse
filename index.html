@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>rfalse</title>
+</head>
+<body>
+	Check the console!
+
+	<script type="module">
+		import * as wasm from './pkg/rfalse.js'
+
+		console.log('[index] initializing wasm...')
+		await wasm.default()
+		console.log('[index] wasm loaded, running main')
+		console.time('wasm_main')
+		wasm.wasm_main()
+		console.timeEnd('wasm_main')
+		console.log('[index] main finished')
+	</script>
+</body>
+</html>
