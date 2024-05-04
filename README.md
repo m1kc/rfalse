@@ -1,17 +1,27 @@
 # rfalse
 
-An interpreter for the [FALSE](https://esolangs.org/wiki/FALSE) language.
+An interpreter for the [FALSE](https://esolangs.org/wiki/FALSE) language — possibly the fastest in the world.
 
 - Supports all language features;
 - Written in Rust;
-- Up to 5x faster than [false-js](http://www.quirkster.com/iano/js/false-js.html) (test: Primes, n=1999; 4392 ms vs. 869 ms)
+- Up to 38 times more performant than [false-js](http://www.quirkster.com/iano/js/false-js.html) (see benchmarks below). If you are aware of any faster implementations, please let me know!
 
 ### Table of Contents
 
+- [Benchmarks](#benchmarks)
 - [How to run](#how-to-run)
 - [WASM support](#wasm-support)
-- [How to run tests](#how-to-run-tests)
+- [Hacking](#hacking)
 - [License](#license)
+
+### Benchmarks
+
+| Test | false-js | rfalse | difference |
+|------|----------|--------|------------|
+| Primes, n=1999 | 4392 ms | **168 ms** | ~26x
+| Fibonacci, n=33 | 37597 ms | **987 ms** | ~38x
+| Fibonacci, n=25 | 802 ms | **21 ms** | ~38x
+
 
 ### How to run
 
@@ -35,10 +45,24 @@ python3 -m http.server 8000 -d .
 
 Navigate to http://localhost:8000 and open the console.
 
-### How to run tests
+### Hacking
+
+Run linter:
+
+```sh
+cargo clippy
+```
+
+Run tests:
 
 ```sh
 cargo test
+```
+
+Run benchmarks:
+
+```sh
+cargo bench --bench perf
 ```
 
 ### License
