@@ -26,8 +26,10 @@ An interpreter for the [FALSE](https://esolangs.org/wiki/FALSE) language — pos
 ## How to run
 
 ```sh
-cargo run --release
+cargo run --release -- examples/hello.false
 ```
+
+In no filename is given, stdin will be used instead.
 
 ## WASM support
 
