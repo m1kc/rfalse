@@ -6,7 +6,7 @@ An interpreter for the [FALSE](https://esolangs.org/wiki/FALSE) language — pos
 - Written in Rust;
 - Up to 38 times more performant than [false-js](http://www.quirkster.com/iano/js/false-js.html) (see benchmarks below). If you are aware of any faster implementations, please let me know!
 
-### Table of Contents
+## Table of Contents
 
 - [Benchmarks](#benchmarks)
 - [How to run](#how-to-run)
@@ -14,7 +14,7 @@ An interpreter for the [FALSE](https://esolangs.org/wiki/FALSE) language — pos
 - [Hacking](#hacking)
 - [License](#license)
 
-### Benchmarks
+## Benchmarks
 
 | Test | false-js | rfalse | difference |
 |------|----------|--------|------------|
@@ -23,15 +23,17 @@ An interpreter for the [FALSE](https://esolangs.org/wiki/FALSE) language — pos
 | Fibonacci, n=25 | 802 ms | **21 ms** | ~38x
 
 
-### How to run
+## How to run
 
 ```sh
 cargo run --release
 ```
 
-### WASM support
+## WASM support
 
-Experimental feature. First, compile the WASM files:
+Experimental feature. WASM performance is about 2x worse than native build.
+
+First, compile the WASM files:
 
 ```sh
 wasm-pack build --release --target web
@@ -45,7 +47,7 @@ python3 -m http.server 8000 -d .
 
 Navigate to http://localhost:8000 and open the console.
 
-### Hacking
+## Hacking
 
 Run linter:
 
@@ -65,6 +67,6 @@ Run benchmarks:
 cargo bench --bench perf
 ```
 
-### License
+## License
 
 GNU LGPL v3
