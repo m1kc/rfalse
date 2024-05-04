@@ -29,5 +29,5 @@ harness = false
 [profile.release]
 opt-level = 3
 lto = true
-#debug = false
+#debug = true
 #rpath = false

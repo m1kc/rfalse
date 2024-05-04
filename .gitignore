@@ -1,2 +1,4 @@
 /target
 /pkg
+flamegraph.*
+perf.data*

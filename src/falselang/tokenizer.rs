@@ -91,8 +91,8 @@ pub enum Token {
 	WriteInt,
 	FlushIO,
 
-	// Parser stuff
-	ParsedLambda(Vec<Token>),
+	// Parser output only, must not be output by tokenizer
+	LambdaPointer(usize),
 }
 
 const SIMPLE_TOKENS: [(char, Token); 55] = [

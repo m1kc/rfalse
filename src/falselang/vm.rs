@@ -12,7 +12,7 @@ pub enum StepResult {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum StackElement {
 	Number(i64),
-	Lambda(Vec<Token>),
+	Lambda(usize),  // contains function index in storage
 	Variable(char),
 }
 
@@ -24,9 +24,9 @@ impl StackElement {
 		panic!("Expected number, got {:?}", self);
 	}
 
-	pub fn expect_lambda(&self) -> &Vec<Token> {
+	pub fn expect_lambda(&self) -> usize {
 		if let StackElement::Lambda(l) = self {
-			return l;
+			return *l;
 		}
 		panic!("Expected lambda, got {:?}", self);
 	}
@@ -39,14 +39,17 @@ impl StackElement {
 	}
 }
 
+#[derive(Debug)]
 pub struct FalseVM {
 	pub stack: Vec<StackElement>,
 	pub variables: HashMap<char, StackElement>,
+	pub functions: Vec<Vec<Token>>,
 
-	pub instructions: Vec<Token>,
+	pub fn_index: usize,
 	pub cursor: usize,
 
 	pub verbose: bool,
+
 }
 
 impl FalseVM {
@@ -54,41 +57,48 @@ impl FalseVM {
 		FalseVM {
 			stack: Vec::new(),
 			variables: HashMap::new(),
-			instructions: Vec::new(),
+			fn_index: 0,
 			cursor: 0,
 			verbose: false,
+			functions: Vec::new(),
 		}
 	}
 
 	pub fn load(&mut self, code: &str) {
 		let t = Tokenizer::new(code);
 		let mut parser = super::parser::Parser::new(t);
-		self.instructions = parser.all();
+		self.fn_index = match parser.parse() {
+			Token::LambdaPointer(l) => l,
+			_ => panic!("Expected lambda"),
+		};
+		self.functions = parser.lambda_storage;
 		self.cursor = 0;
 	}
 
 	pub fn peek_instruction(&self) -> Option<&Token> {
-		self.instructions.get(self.cursor)
+		self.functions.get(self.fn_index).and_then(|v| v.get(self.cursor))
 	}
 
-	pub fn gosub(&mut self, code: &[Token]) {
+	pub fn gosub(&mut self, lambda_index: usize) {
 		// save
 		let tmph = self.cursor;
-		let tmp = self.instructions.clone();
+		let tmp = self.fn_index.clone();
 		// replace & run
-		self.instructions = code.to_owned();
+		self.fn_index = lambda_index;
 		self.cursor = 0;
 		self.run();
 		// restore
-		self.instructions = tmp;
+		self.fn_index = tmp;
 		self.cursor = tmph;
 	}
 
 	pub fn step(&mut self) -> StepResult {
-		if self.cursor >= self.instructions.len() {
+		assert!(self.functions.len() > 0, "invalid VM state (did you call load()?)");
+		let curr = self.functions.get(self.fn_index).expect("wrong curr");
+		if self.cursor >= curr.len() {
 			return StepResult::End;
 		}
-		match &self.instructions[self.cursor] {
+		match &curr[self.cursor] {
 			Token::Number(n) => self.stack.push(StackElement::Number(*n)),
 
 			Token::Dup => {
@@ -178,8 +188,8 @@ impl FalseVM {
 				self.stack.push(StackElement::Number(if a > b { !0 } else { 0 }));
 			}
 
-			Token::ParsedLambda(v) => {
-				self.stack.push(StackElement::Lambda(v.clone()));
+			Token::LambdaPointer(v) => {
+				self.stack.push(StackElement::Lambda(*v));
 			}
 			Token::LambdaExecute => {
 				let l = self.stack.pop().expect("Stack underflow");
@@ -285,6 +295,7 @@ mod tests {
 	#[test]
 	fn test_empty() {
 		let mut vm = FalseVM::new();
+		vm.load("");
 		vm.run();
 		assert_eq!(vm.stack.len(), 0);
 	}

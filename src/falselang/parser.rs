@@ -2,12 +2,14 @@ use super::tokenizer::{Token, Tokenizer};
 
 pub struct Parser {
 	pub tokenizer: Tokenizer,
+	pub lambda_storage: Vec<Vec<Token>>,
 }
 
 impl Parser {
 	pub fn new(t: Tokenizer) -> Parser {
 		Parser {
 			tokenizer: t,
+			lambda_storage: Vec::new(),
 		}
 	}
 
@@ -19,7 +21,8 @@ impl Parser {
 			}
 			if t == Token::LambdaStart {
 				let lambda = self.read_lambda();
-				tokens.push(Token::ParsedLambda(lambda));
+				self.lambda_storage.push(lambda);
+				tokens.push(Token::LambdaPointer(self.lambda_storage.len() - 1));
 				continue;
 			}
 			tokens.push(t);
@@ -27,24 +30,10 @@ impl Parser {
 		tokens
 	}
 
-	pub fn next(&mut self) -> Option<Token> {
-		let tok = self.tokenizer.next_token();
-		match tok {
-			Some(Token::LambdaStart) => {
-				let tokens = self.read_lambda();
-				Some(Token::ParsedLambda(tokens))
-			}
-			Some(t) => Some(t),
-			None => None,
-		}
-	}
-
-	pub fn all(&mut self) -> Vec<Token> {
-		let mut tokens = Vec::new();
-		while let Some(token) = self.next() {
-			tokens.push(token);
-		}
-		tokens
+	pub fn parse(&mut self) -> Token {
+		let tokens = self.read_lambda();
+		self.lambda_storage.push(tokens);
+		Token::LambdaPointer(self.lambda_storage.len() - 1)
 	}
 }
 
@@ -56,12 +45,19 @@ mod tests {
 	#[test]
 	fn test_next() {
 		let mut parser = Parser::new(Tokenizer::new("[2 2+]"));
-		assert_eq!(parser.all(), vec![
-			Token::ParsedLambda(vec![
-				Token::Number(2),
-				Token::Number(2),
-				Token::Plus,
-			]),
-		])
+		assert_eq!(parser.parse(), Token::LambdaPointer(1));
+		assert_eq!(parser.lambda_storage, vec![
+			vec![Token::Number(2), Token::Number(2), Token::Plus],
+			vec![Token::LambdaPointer(0)],
+		]);
+	}
+
+	#[test]
+	fn test_empty() {
+		let mut parser = Parser::new(Tokenizer::new(""));
+		assert_eq!(parser.parse(), Token::LambdaPointer(0));
+		assert_eq!(parser.lambda_storage, vec![
+			vec![],
+		]);
 	}
 }
