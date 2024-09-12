@@ -1,5 +1,6 @@
 mod falselang;
 use falselang::vm::FalseVM;
+// use falselang::vm2::FalseVM;
 use std::{io::Read, time::Instant};
 
 
@@ -20,10 +21,13 @@ fn main() {
 	let start = Instant::now();
 	vm.load(&code);
 	println!("ok, {:?}", start.elapsed());
+	// vm.dump2();
 
 	println!("Running...\n");
 	let start = Instant::now();
 	// vm.verbose = true;
 	vm.run();
 	println!("\n\nRun complete, {:?}", start.elapsed());
+	// println!();
+	// vm.dump2();
 }

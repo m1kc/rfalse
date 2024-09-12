@@ -1,4 +1,5 @@
-use rfalse::falselang::vm::{FalseVM, StackElement};
+// use rfalse::falselang::vm::{FalseVM, StackElement};
+use rfalse::falselang::vm2::FalseVM;
 use criterion::{criterion_group, criterion_main, Criterion};
 
 fn perf() {

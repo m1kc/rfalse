@@ -6,6 +6,7 @@ edition = "2021"
 
 
 [dependencies]
+num_enum = { version = "0.7.3", features = [], default-features = false }
 
 [dev-dependencies]
 criterion = "0.5.1"

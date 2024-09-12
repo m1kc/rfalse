@@ -22,6 +22,13 @@ An interpreter for the [FALSE](https://esolangs.org/wiki/FALSE) language — pos
 | Fibonacci, n=33 | 37597 ms | **987 ms** | ~38x
 | Fibonacci, n=25 | 802 ms | **21 ms** | ~38x
 
+Experimental VM:
+
+| Test | false-js | rfalse-vm2 | difference |
+|------|----------|--------|------------|
+| Primes, n=1999 | 4392 ms | **N/A** | N/A
+| Fibonacci, n=33 | 37597 ms | **435 ms** | ~86x
+| Fibonacci, n=25 | 802 ms | **9 ms** | ~89x
 
 ## How to run
 
@@ -72,3 +79,7 @@ cargo bench --bench perf
 ## License
 
 GNU LGPL v3
+
+## See also
+
+Check out this awesome FALSE interpreter by @solkin: https://github.com/solkin/false-vm
