@@ -457,4 +457,26 @@ mod tests {
 			StackElement::Number(720),
 		]);
 	}
+
+	#[test]
+	fn test_fn_fibonacci() {
+		let mut vm = FalseVM::new();
+		vm.load("[$ 1 > [1- $ f;! \\ 1- f;! +]?]f: 12 f;!");
+		vm.run();
+		assert_eq!(vm.stack, vec![
+			StackElement::Number(144),
+		]);
+	}
+
+	#[test]
+	fn test_fn_primes() {
+		let mut vm = FalseVM::new();
+		vm.load("50 9[1-$][\\$@$@$@$@\\/*=[1-$$[%\\1-$@]?0=[\\' ,\\]?]?]#");
+		vm.run();
+		assert_eq!(vm.stack, vec![
+			// 47 43 41 37 31 29 23 19 17 13 11 7 5 3 2
+			StackElement::Number(1),
+			StackElement::Number(0),
+		]);
+	}
 }
