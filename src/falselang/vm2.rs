@@ -40,6 +40,10 @@ pub enum Instr {
 	BitNot = 1014, // 0 args, 0 stack
 	Gt = 1015, // 0 args, -1 stack
 	Eq = 1016, // 0 args, -1 stack
+	// ReadChar
+	WriteChar = 1018, // 0 args, -1 stack
+	WriteInt = 1019, // 0 args, -1 stack
+	WriteString = 1020, // 1+N args, 0 stack
 
 	Call = 1025, // 0 args, -1 stack
 	CallIf = 1026, // 0 args, -2 stack
@@ -113,9 +117,18 @@ impl FalseVM {
 				Token::LambdaExecute => self.instr_push(Instr::Call),
 				Token::LambdaPointer(n) => self.instr_push1(Instr::Push, self.fn_pointer.get(&n).unwrap().clone() as i32),
 				Token::LambdaIf => self.instr_push(Instr::CallIf),
+				Token::LambdaWhile => {
+					self.instr_push(Instr::CallIf);
+				}
 
-				Token::PrintString(_) => continue,
-				Token::WriteInt => continue,
+				Token::PrintString(s) => {
+					self.instr_push1(Instr::WriteString, s.chars().count() as i32);
+					for c in s.chars() {
+						self.instr_push_raw(c as i32);
+					}
+				}
+				Token::WriteInt => self.instr_push(Instr::WriteInt),
+				Token::WriteChar => self.instr_push(Instr::WriteChar),
 
 				unknown => panic!("compile_fn: Not implemented: {:?}", unknown),
 			}
@@ -384,6 +397,25 @@ impl FalseVM {
 				StepResult::OK
 			}
 
+			Instr::WriteString => {
+				let n = self.instr_consume();
+				for _ in 0..n {
+					let a = self.instr_consume();
+					print!("{}", a as u8 as char);
+				}
+				StepResult::OK
+			}
+			Instr::WriteChar => {
+				let a = self.pop();
+				print!("{}", a as u8 as char);
+				StepResult::OK
+			}
+			Instr::WriteInt => {
+				let a = self.pop();
+				print!("{}", a);
+				StepResult::OK
+			}
+
 			Instr::Call => {
 				let addr = self.pop();
 				self.callstack_push(self.cursor as i32);
@@ -571,7 +603,6 @@ mod tests {
 	#[test]
 	fn test_if() {
 		let mut vm = FalseVM::new();
-		// vm.load("1[5]? 0[6]?");
 		vm.load("1[777]?  0[333]?  2 2+ 4=[777]?");
 		vm.run();
 		assert_eq!(vm.stack_size(), 2);
@@ -606,9 +637,6 @@ mod tests {
 	fn test_fn_factorial() {
 		let mut vm = FalseVM::new();
 		vm.load("[$1=$[\\%1\\]?~[$1-f;!*]?]f:    6 f;!");
-		// vm.dump2();
-		// vm.verbose = true;
-		// assert!(false);
 		vm.run();
 		assert_eq!(vm.stack_size(), 1);
 		for i in [720] {
