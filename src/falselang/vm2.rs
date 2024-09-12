@@ -47,11 +47,16 @@ pub enum Instr {
 
 	Call = 1025, // 0 args, -1 stack
 	CallIf = 1026, // 0 args, -2 stack
+	Return = 1027, // 0 args, 0 stack
+	Goto = 1028, // 1 args, 0 stack
+	GotoIf = 1029, // 0 args, -2 stack
+	Halt = 1030,
 
-	Return = 1030, // 0 args, -1 stack
-	Halt = 1031,
 	VarRead = 1032, // 0 args, 0 stack
 	VarWrite = 1033, // 0 args, -2 stack
+	MoveToCallStack = 1034, // 0 args, -1 stack
+	PickFromCallStack = 1035, // 1 arg, +1 stack
+	DropFromCallStack = 1036, // 0 args, 0 stack
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -118,7 +123,20 @@ impl FalseVM {
 				Token::LambdaPointer(n) => self.instr_push1(Instr::Push, self.fn_pointer.get(&n).unwrap().clone() as i32),
 				Token::LambdaIf => self.instr_push(Instr::CallIf),
 				Token::LambdaWhile => {
+					self.instr_push(Instr::MoveToCallStack); // body_fn
+					self.instr_push(Instr::MoveToCallStack); // condition_fn
+					let addr = self.cursor as i32;
+					self.instr_push1(Instr::PickFromCallStack, 0); // duplicate condition_fn addr to data stack
+					self.instr_push(Instr::Call); // jump to condition
+					self.instr_push(Instr::Dup);
+					self.instr_push(Instr::MoveToCallStack); // save cond_result to call stack (._.)
+					self.instr_push1(Instr::PickFromCallStack, 2); // duplicate body addr to data stack
 					self.instr_push(Instr::CallIf);
+					self.instr_push1(Instr::PickFromCallStack, 0); // duplicate cond_result to data stack
+					self.instr_push(Instr::DropFromCallStack);
+					self.instr_push1(Instr::GotoIf, addr);
+					self.instr_push(Instr::DropFromCallStack);
+					self.instr_push(Instr::DropFromCallStack);
 				}
 
 				Token::PrintString(s) => {
@@ -297,8 +315,8 @@ impl FalseVM {
 		}
 
 		match opcode {
-			// Instr::Noop => StepResult::OK,
-			Instr::Noop => panic!("noop"),
+			Instr::Noop => StepResult::OK,
+			// Instr::Noop => panic!("noop is disabled"),
 			Instr::Push => {
 				let arg = self.instr_consume();
 				self.push(arg);
@@ -432,6 +450,20 @@ impl FalseVM {
 				StepResult::OK
 			}
 
+			Instr::Goto => {
+				let addr = self.instr_consume();
+				self.goto(addr as usize);
+				StepResult::OK
+			}
+			Instr::GotoIf => {
+				let addr = self.instr_consume();
+				let cond = self.pop();
+				if cond != 0 {
+					self.goto(addr as usize);
+				}
+				StepResult::OK
+			}
+
 			Instr::Return => {
 				let addr = self.callstack_pop();
 				self.goto(addr as usize);
@@ -447,6 +479,22 @@ impl FalseVM {
 				let var = self.pop();
 				let value = self.pop();
 				self.memory[FIRST_VAR + var as usize] = value;
+				StepResult::OK
+			}
+
+			Instr::MoveToCallStack => {
+				let addr = self.pop();
+				self.callstack_push(addr);
+				StepResult::OK
+			}
+			Instr::PickFromCallStack => {
+				let n = self.instr_consume();
+				let addr = self.memory[self.callstack_pointer - n as usize];
+				self.push(addr);
+				StepResult::OK
+			}
+			Instr::DropFromCallStack => {
+				_ = self.callstack_pop();
 				StepResult::OK
 			}
 		}
@@ -563,6 +611,17 @@ mod tests {
 		vm.run();
 		assert_eq!(vm.stack_size(), 4);
 		for i in [1, 3, 2, 0] {
+			assert_eq!(vm.pop(), i);
+		}
+	}
+
+	#[test]
+	fn test_while() {
+		let mut vm = FalseVM::new();
+		vm.load("10 [$5 >][1 -]#");
+		vm.run();
+		assert_eq!(vm.stack_size(), 1);
+		for i in [5] {
 			assert_eq!(vm.pop(), i);
 		}
 	}

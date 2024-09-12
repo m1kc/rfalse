@@ -27,7 +27,7 @@ Experimental VM:
 
 | Test | false-js | rfalse-vm2 | difference |
 |------|----------|--------|------------|
-| Primes, n=1999 | 4392 ms | **N/A** | N/A
+| Primes, n=1999 | 4392 ms | **102 ms** | ~43x
 | Fibonacci, n=33 | 37597 ms | **435 ms** | ~86x
 | Fibonacci, n=25 | 802 ms | **9 ms** | ~89x
 
