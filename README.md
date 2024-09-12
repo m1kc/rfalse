@@ -82,4 +82,13 @@ GNU LGPL v3
 
 ## See also
 
-Check out this awesome FALSE interpreter by @solkin: https://github.com/solkin/false-vm
+* [FALSE home page](https://strlen.com/false-language/)
+* [FALSE page on Esolangs](https://esolangs.org/wiki/FALSE) — the closest thing we have to a language reference
+* [Archived language reference](https://web.archive.org/web/20110716155733/http://strlen.com/false/false.txt), was very hard to find
+* [FALSE article on Russian Wikipedia](https://ru.wikipedia.org/wiki/FALSE) which contains some useful explanations; funny enough, there's no English version
+
+Other notable implementations:
+
+* [Awesome FALSE interpreter](https://github.com/solkin/false-vm) by Igor Solkin
+* [false-js](https://www.quirkster.com/iano/js/false-js.html) by Ian Osgood
+* [JavaScript FALSE interpreter](https://morphett.info/false/false.html) by Anthony Morphett
