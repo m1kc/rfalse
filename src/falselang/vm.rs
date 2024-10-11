@@ -93,7 +93,7 @@ impl FalseVM {
 	}
 
 	pub fn step(&mut self) -> StepResult {
-		assert!(self.functions.len() > 0, "invalid VM state (did you call load()?)");
+		assert!(!self.functions.is_empty(), "invalid VM state (did you call load()?)");
 		let curr = self.functions.get(self.fn_index).expect("wrong curr");
 		if self.cursor >= curr.len() {
 			return StepResult::End;
@@ -264,7 +264,7 @@ impl FalseVM {
 			}
 		}
 		self.cursor += 1;
-		return StepResult::OK;
+		StepResult::OK
 	}
 
 	#[allow(dead_code)]
@@ -284,6 +284,13 @@ impl FalseVM {
 				println!("    Vars: {:?}", self.variables);
 			}
 		}
+	}
+}
+
+
+impl Default for FalseVM {
+	fn default() -> Self {
+		Self::new()
 	}
 }
 

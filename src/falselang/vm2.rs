@@ -4,6 +4,12 @@ use std::collections::HashMap;
 use crate::falselang::tokenizer::*;
 use num_enum::{TryFromPrimitive, IntoPrimitive};
 
+
+// Memory layout:
+// * variables start at 0x00
+// * call stack starts at 26 (0x1A)
+// * instructions start at call stack size + 26 (0x1A)
+// * data stack starts at the end (and grows backwards)
 const MEM_SIZE: usize = 131072;
 const FIRST_VAR: usize = 0;
 const CALL_STACK_START: usize = FIRST_VAR + 26;
@@ -68,11 +74,6 @@ pub enum StepResult {
 impl FalseVM {
 	pub fn new() -> Self {
 		FalseVM {
-			// Memory layout:
-			// * variables start at 0x00
-			// * call stack starts at 26 (0x1A)
-			// * instructions start at call stack size + 26 (0x1A)
-			// * data stack starts at the end (and grows backwards)
 			memory: Box::new([0; MEM_SIZE]),
 			cursor: FIRST_INSTR,
 			stack_pointer: MEM_SIZE,
@@ -185,7 +186,7 @@ impl FalseVM {
 	pub fn instr_consume(&mut self) -> i32 {
 		let ret = self.memory[self.cursor];
 		self.cursor += 1;
-		return ret;
+		ret
 	}
 
 	pub fn instr_push(&mut self, x: Instr) {
@@ -194,13 +195,13 @@ impl FalseVM {
 
 	pub fn instr_push1(&mut self, x: Instr, arg1: i32) {
 		self.instr_push_raw(x as i32);
-		self.instr_push_raw(arg1 as i32);
+		self.instr_push_raw(arg1);
 	}
 
 	pub fn instr_push2(&mut self, x: Instr, arg1: i32, arg2: i32) {
 		self.instr_push_raw(x as i32);
-		self.instr_push_raw(arg1 as i32);
-		self.instr_push_raw(arg2 as i32);
+		self.instr_push_raw(arg1);
+		self.instr_push_raw(arg2);
 	}
 
 	pub fn instr_push_raw(&mut self, x: i32) {
@@ -226,7 +227,7 @@ impl FalseVM {
 		let ret = self.memory[self.stack_pointer];
 		self.memory[self.stack_pointer] = 0; // optional
 		self.stack_pointer += 1;
-		return ret;
+		ret
 	}
 
 	pub fn stack_size(&self) -> usize {
@@ -512,6 +513,14 @@ impl FalseVM {
 		}
 	}
 }
+
+
+impl Default for FalseVM {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 
 #[cfg(test)]
 mod tests {
