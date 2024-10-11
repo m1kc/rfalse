@@ -1,2 +1,5 @@
+{A horribly inefficient implementation that recursively computes the n-th Fibonacci number.}
+{This is useful to get a rough ballpark estimate of the speed of a FALSE interpreter.}
+
 [$ 1 > [1- $ f;! \ 1- f;! +]?]f:
 33 $. "th Fibonacci number is " f;! . {compute & print 33th fibonacci number}

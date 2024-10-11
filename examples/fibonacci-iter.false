@@ -1,0 +1,9 @@
+"Enter N: "ß
+{read input n}
+0 n:
+[^ $ $ '9 > \ '0 \ > | ~]['0 - n; 10 * + n:]#
+%
+{compute n-th fibonacci number iteratively}
+0 1
+[n; 1 - $ n: 1_=~][$ @ +]#
+% .
